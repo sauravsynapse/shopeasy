@@ -1,6 +1,7 @@
 package com.coder.shopeasy.service.product;
 
 import com.coder.shopeasy.exceptions.ProductNotFoundException;
+import com.coder.shopeasy.exceptions.ResourceNotFoundException;
 import com.coder.shopeasy.model.Category;
 import com.coder.shopeasy.model.Product;
 import com.coder.shopeasy.repository.CategoryRepository;
@@ -16,10 +17,14 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class ProductService implements IProductService{
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+
+    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository) {
+        this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
+    }
 
     @Override
     public Product addProduct(AddProductRequest request) {
@@ -51,21 +56,22 @@ public class ProductService implements IProductService{
     }
     @Override
     public Product getProductById(Long id) {
-        return productRepository.findById(id).orElseThrow(()->new ProductNotFoundException("Product Not Found!"));
+        return productRepository.findById(id)
+                .orElseThrow(()->new ResourceNotFoundException("Product Not Found!"));
     }
 
     @Override
     public void deleteProductById(Long id) {
         productRepository.findById(id).
                 ifPresentOrElse(productRepository::delete,
-                        ()->{throw new ProductNotFoundException("Product Not Found!");});
+                        ()->{throw new ResourceNotFoundException("Product Not Found!");});
     }
 
     @Override
     public Product updateProduct(ProductUpdateRequest request, Long productId) {
         return productRepository.findById(productId).map(existingProduct -> updateExistingProduct(existingProduct,request))
                 .map(productRepository::save)
-                .orElseThrow(()->new ProductNotFoundException("Product Not Found!"));
+                .orElseThrow(()->new ResourceNotFoundException("Product Not Found!"));
     }
 
     private Product updateExistingProduct(Product existingProduct, ProductUpdateRequest request) {
